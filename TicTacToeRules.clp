@@ -62,35 +62,35 @@
 	   
 	   defrule centre-square
 	   "Rule 5 - play a centre square"
-	   ((not occupied {square = 5})
+	   ((not occupied {square == 5})
 	   =>
-	   (assert (occupied (square 5) (player ?p))))
+	   (assert (occupied (square 5) (player ?player))))
 	
 	
 	
 	defrule top-right-corner
 	   "Rule 6 - play an available corner square"
-	((not occupied {square = 3})
+	((not occupied {square == 3})
 	=>
-	 (assert (occupied (square 3) (player ?p))))
+	 (assert (occupied (square 3) (player ?player))))
 	
 	defrule lower-right-corner
 	   "Rule 6 - play an available corner square"
-	((not occupied {square = 9})
+	((not occupied {square == 9})
 	=>
-	 (assert (occupied (square 9) (player ?p))))
+	 (assert (occupied (square 9) (player ?player))))
 	
 	defrule top-left-corner
 	   "Rule 6 - play an available corner square"
-	((not occupied {square = 1})
+	((not occupied {square == 1})
 	=>
-	 (assert (occupied (square 1) (player ?p))))
+	 (assert (occupied (square 1) (player ?player))))
 	
 	defrule lower-left-corner
 	   "Rule 6 - play an available corner square"
-	((not occupied {square = 7})
+	((not occupied {square == 7})
 	=>
-	 (assert (occupied (square 7) (player ?p))))
+	 (assert (occupied (square 7) (player ?player))))
 
 
 (reset)
