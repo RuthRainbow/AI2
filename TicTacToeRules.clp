@@ -5,30 +5,23 @@
     (slot sq3(type INTEGER))
     )
 
+(assert (line (sq1 1) (sq2 2) (sq3 3)))
+(assert (line (sq1 4) (sq2 5) (sq3 6)))
+(assert (line (sq1 7) (sq2 8) (sq3 9)))
+(assert (line (sq1 1) (sq2 4) (sq3 7)))
+(assert (line (sq1 2) (sq2 5) (sq3 8)))
+(assert (line (sq1 3) (sq2 6) (sq3 9)))
+(assert (line (sq1 1) (sq2 5) (sq3 9)))
+(assert (line (sq1 3) (sq2 5) (sq3 7)))
+
 (deftemplate occupied
     "Square is occupied by player"
     (slot square(type INTEGER))
     (slot player(type STRING))
     )
 
-(deftemplate unoccupied
-    "Square is not occupied"
-    (slot square(type INTEGER))
-    )
-
-(assert (unoccupied (square 1)))
-(assert (unoccupied (square 2)))
-(assert (unoccupied (square 3)))
-(assert (unoccupied (square 4)))
-(assert (unoccupied (square 5)))
-(assert (unoccupied (square 6)))
-(assert (unoccupied (square 7)))
-(assert (unoccupied (square 8)))
-(assert (unoccupied (square 9)))
-
 (deffacts initial-phase
     (phase choose-player))
-
 
 (defrule player-select
     (phase choose-player)
@@ -53,14 +46,17 @@
     (assert (phase choose-player))
     (printout t "Please choose X or O." crlf))
 
-(assert (line (sq1 1) (sq2 2) (sq3 3)))
-(assert (line (sq1 4) (sq2 5) (sq3 6)))
-(assert (line (sq1 7) (sq2 8) (sq3 9)))
-(assert (line (sq1 1) (sq2 4) (sq3 7)))
-(assert (line (sq1 2) (sq2 5) (sq3 8)))
-(assert (line (sq1 3) (sq2 6) (sq3 9)))
-(assert (line (sq1 1) (sq2 5) (sq3 9)))
-(assert (line (sq1 3) (sq2 5) (sq3 7)))
+(defrule x-turn
+    (player-move X)
+    =>
+    (undefinstance(player-turn h))
+    (assert(player-turn c)))
+
+(defrule o-turn
+    (player-move O)
+    =>
+    (undefinstance(player-turn c))
+    (assert (player-turn h)))
 
 (defquery search-coordinate
     "query to find out all the points that X/O occupies:"
@@ -79,34 +75,52 @@
 (defrule centre-square
 "Rule 5 - play a centre square"
 (not (occupied {square == 5}))
+(player-turn c)
     =>
-    (assert (occupied (square 5) (player ?player))))
-
+    (retract (player-turn c))
+    (assert (player-turn h))
+    (printout t "Playing centre" crlf)
+    (assert (occupied (square 5) (player player-move))))
 
 (defrule top-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 3}))
+    (player-turn c)
     =>
-    (assert (occupied (square 3) (player ?player))))
+    (retract (player-turn c))
+    (assert (player-turn h))
+    (printout t "Playing top right" crlf)
+    (assert (occupied (square 3) (player player-move))))
 
 (defrule lower-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 9}))
+    (player-turn c)
     =>
-    (assert (occupied (square 9) (player ?player))))
+    (retract (player-turn c))
+    (assert (player-turn h))
+    (printout t "Playing lower right" crlf)
+    (assert (occupied (square 9) (player player-move))))
 
 (defrule top-left-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 1}))
+    (player-turn c)
     =>
-    (assert (occupied (square 1) (player ?player))))
+    (retract (player-turn c))
+    (assert (player-turn h))
+    (printout t "Playing top left" crlf)
+    (assert (occupied (square 1) (player player-move))))
 
 (defrule lower-left-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 7}))
+    (player-turn c)
     =>
-    (assert (occupied (square 7) (player ?player))))
-
+    (retract (player-turn c))
+    (assert (player-turn h))
+    (printout t "Playing lower left" crlf)
+    (assert (occupied (square 7) (player player-move))))
 
 (reset)
 (run)
