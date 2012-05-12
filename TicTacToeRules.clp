@@ -20,6 +20,11 @@
     (slot player(type STRING))
     )
 
+(deftemplate player-turn
+    "Square is occupied by player"
+    (slot go(type STRING))
+    )
+
 (deffacts initial-phase
     (phase choose-player))
 
@@ -49,14 +54,13 @@
 (defrule x-turn
     (player-move X)
     =>
-    (undefinstance(player-turn h))
-    (assert(player-turn c)))
+    (bind ?player-turn <- (assert(player-turn (go c)))))
+;above is totally inflexible :(
 
 (defrule o-turn
     (player-move O)
     =>
-    (undefinstance(player-turn c))
-    (assert (player-turn h)))
+    (bind ?player-turn <- (assert(player-turn (go h)))))
 
 (defquery search-coordinate
     "query to find out all the points that X/O occupies:"
@@ -75,50 +79,45 @@
 (defrule centre-square
 "Rule 5 - play a centre square"
 (not (occupied {square == 5}))
-(player-turn c)
+(player-turn (go c))
     =>
-    (retract (player-turn c))
-    (assert (player-turn h))
+    (modify ?player-turn (go h))
     (printout t "Playing centre" crlf)
     (assert (occupied (square 5) (player player-move))))
 
 (defrule top-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 3}))
-    (player-turn c)
+(player-turn (go c))
     =>
-    (retract (player-turn c))
-    (assert (player-turn h))
+    (modify ?player-turn (go h))
     (printout t "Playing top right" crlf)
     (assert (occupied (square 3) (player player-move))))
 
 (defrule lower-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 9}))
-    (player-turn c)
+(player-turn (go c))
     =>
-    (retract (player-turn c))
-    (assert (player-turn h))
+    (modify ?player-turn (go h))
     (printout t "Playing lower right" crlf)
     (assert (occupied (square 9) (player player-move))))
 
 (defrule top-left-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 1}))
-    (player-turn c)
+(player-turn (go c))
     =>
-    (retract (player-turn c))
-    (assert (player-turn h))
+    (modify ?player-turn (go h))
     (printout t "Playing top left" crlf)
     (assert (occupied (square 1) (player player-move))))
 
 (defrule lower-left-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 7}))
-    (player-turn c)
+(player-turn (go c))
     =>
-    (retract (player-turn c))
-    (assert (player-turn h))
+    (modify ?player-turn (go h))
     (printout t "Playing lower left" crlf)
     (assert (occupied (square 7) (player player-move))))
 
