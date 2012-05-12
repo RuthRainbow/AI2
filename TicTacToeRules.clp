@@ -39,8 +39,16 @@
     ?phase <- (phase choose-player)
     ?choice <- (player-select ?player&:(or (eq ?player X) (eq ?player O)))
     =>
+    (bind ?player-turn <- first-player(?choice))
     (retract ?phase ?choice)
     (assert (player-move X))
+    )
+
+(deffunction first-player(?move)
+    (if (eq ?move X) then
+        (return h)
+     else
+        (return c))
     )
 
 (defrule invalid-choice
@@ -51,16 +59,12 @@
     (assert (phase choose-player))
     (printout t "Please choose X or O." crlf))
 
-(defrule x-turn
-    (player-move X)
-    =>
-    (bind ?player-turn <- (assert(player-turn (go c)))))
-;above is totally inflexible :(
 
-(defrule o-turn
-    (player-move O)
-    =>
-    (bind ?player-turn <- (assert(player-turn (go h)))))
+(deffunction next-player(?curr)
+    (if (eq ?curr O) then
+        (return X)
+     else
+        (return O)))
 
 (defquery search-coordinate
     "query to find out all the points that X/O occupies:"
@@ -79,9 +83,9 @@
 (defrule centre-square
 "Rule 5 - play a centre square"
 (not (occupied {square == 5}))
-(player-turn (go c))
+(player-turn {go == c})
     =>
-    (modify ?player-turn (go h))
+    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
     (printout t "Playing centre" crlf)
     (assert (occupied (square 5) (player player-move))))
 
@@ -90,7 +94,7 @@
 (not (occupied {square == 3}))
 (player-turn (go c))
     =>
-    (modify ?player-turn (go h))
+    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
     (printout t "Playing top right" crlf)
     (assert (occupied (square 3) (player player-move))))
 
@@ -99,7 +103,7 @@
 (not (occupied {square == 9}))
 (player-turn (go c))
     =>
-    (modify ?player-turn (go h))
+    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
     (printout t "Playing lower right" crlf)
     (assert (occupied (square 9) (player player-move))))
 
@@ -108,7 +112,7 @@
 (not (occupied {square == 1}))
 (player-turn (go c))
     =>
-    (modify ?player-turn (go h))
+    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
     (printout t "Playing top left" crlf)
     (assert (occupied (square 1) (player player-move))))
 
@@ -117,7 +121,7 @@
 (not (occupied {square == 7}))
 (player-turn (go c))
     =>
-    (modify ?player-turn (go h))
+    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
     (printout t "Playing lower left" crlf)
     (assert (occupied (square 7) (player player-move))))
 
