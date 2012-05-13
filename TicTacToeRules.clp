@@ -20,11 +20,6 @@
     (slot player(type STRING))
     )
 
-(deftemplate player-turn
-    "It's go's turn - computer or human"
-    (slot go(type STRING))
-    )
-
 (deffacts initial-phase
     (phase choose-player))
 
@@ -39,23 +34,15 @@
     ?phase <- (phase choose-player)
     ?choice <- (player-select ?player&:(or (eq ?player X) (eq ?player O)))
     =>
-    (printout t "choice was valid" crlf)
-    (bind ?player-turn <- first-player(?choice))
+    (if (eq ?player X) then
+        (printout t "choice was valid - h's go first" crlf)
+        (assert (phase human-move))
+     else
+    	(printout t "choice was valid - c's go first" crlf)
+        (assert (phase computer-move)))
     (retract ?phase ?choice)
-    (assert (player-turn (go ?player-turn)))
     (assert (player-move X))
     )
-
-(deffunction first-player(?move)
-    (if (eq ?move X) then
-        (printout t "h's go first" crlf)
-        (assert (phase human-move))
-        (assert (player-turn (go h)))
-        )
-     else
-    	(printout t "c's go first" crlf)
-        (assert (player-turn (go c)))
-        (assert (phase computer-move)))
 
 (defrule invalid-choice
     ?phase <- (phase choose-player)
@@ -67,12 +54,13 @@
 
 (deffunction next-player(?curr)
     (if (eq ?curr O) then
+        (printout t "X's go now" crlf)
         (return X)
      else
+        (printout t "O's go now" crlf)
         (return O)))
 
 (defrule human-turn
-    (player-turn {go == h})
     (phase human-move)
     =>
     (printout t "please make a move by choosing a square between 1 and 9" crlf)
@@ -87,9 +75,18 @@
     (assert (occupied (square ?move)(player player-move)))
     (assert (phase computer-move)))
 
+/*(defrule square-already-occupied
+    ?phase <- (phase human-move)
+    ?move <- (human-move ?hmove&:(occupied(square (?hmove))))
+    =>
+    (retract ?move ?phase)
+    (assert (phase human-move))
+    (printout t "Square already occupied :( ." crlf))*/
+    
 (defrule invalid-move
     ?phase <- (phase human-move)
-    ?move <- (human-move ?move&~1&~2&~3&~4&~5&~6&~7&~8&~9)
+    ?move <- (human-move ?hmove&~1&~2&~3&~4&~5&~6&~7&~8&~9)
+    ;also need to check square is not already occupied here
     =>
     (retract ?move ?phase)
     (assert (phase human-move))
@@ -112,57 +109,52 @@
 (defrule centre-square
 "Rule 5 - play a centre square"
 (not (occupied {square == 5}))
-;(player-turn {go == c})
 ?phase <- (phase computer-move)
     =>
-    (retract phase)
-    (assert phase human-move)
-    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
+    (retract ?phase)
+    (assert (phase human-move))
     (printout t "Playing centre" crlf)
-    (assert (occupied (square 5) (player player-move)))
-    (modify (phase human-move)))
+    (assert (occupied (square 5) (player player-move))))
 
 (defrule top-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 3}))
-(player-turn (go c))
+?phase <- (phase computer-move)
     =>
-    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
-    (printout t "Playing top right" crlf)
-    (assert (occupied (square 3) (player player-move)))
-    (modify(phase human-move)))
+    (retract ?phase)
+    (assert (phase human-move))
+    (printout t "Playing upper right corner" crlf)
+    (assert (occupied (square 3) (player player-move))))
 
 (defrule lower-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 9}))
-(player-turn (go c))
+?phase <- (phase computer-move)
     =>
-    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
-    (printout t "Playing lower right" crlf)
-    (assert (occupied (square 9) (player player-move)))
-    (modify(phase human-move)))
+    (retract ?phase)
+    (assert (phase human-move))
+    (printout t "Playing lower right corner" crlf)
+    (assert (occupied (square 9) (player player-move))))
 
 (defrule top-left-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 1}))
-(player-turn (go c))
+?phase <- (phase computer-move)
     =>
-    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
-    (printout t "Playing top left" crlf)
-    (assert (occupied (square 1) (player player-move)))
-    
-    (modify(phase human-move)))
+    (retract ?phase)
+    (assert (phase human-move))
+    (printout t "Playing upper left corner" crlf)
+    (assert (occupied (square 1) (player player-move))))
 
 (defrule lower-left-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 7}))
-(player-turn (go c))
-(phase computer-move)
+?phase <- (phase computer-move)
     =>
-    (bind ?player-turn <- (modify(player-turn (go (next-player(?player-turn))))))
-    (printout t "Playing lower left" crlf)
-    (assert (occupied (square 7) (player player-move))
-    (modify(phase human-move))))
+    (retract ?phase)
+    (assert (phase human-move))
+    (printout t "Playing lower left corner" crlf)
+    (assert (occupied (square 7) (player player-move))))
 
 (reset)
 (run)
