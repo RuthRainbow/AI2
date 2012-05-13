@@ -41,11 +41,13 @@
     =>
     (bind ?player-turn <- first-player(?choice))
     (retract ?phase ?choice)
+    (assert (player-turn (go ?player-turn)))
     (assert (player-move X))
     )
 
 (deffunction first-player(?move)
-    (if (eq ?move X) then
+    (if (player-move X) then
+        (assert (phase human-move))
         (return h)
      else
         (return c))
@@ -65,6 +67,30 @@
         (return X)
      else
         (return O)))
+
+(defrule human-turn
+    ;(player-turn {go == h})
+    (phase human-move)
+    =>
+    (printout t "please make a move by choosing a square between 1 and 9" crlf)
+    (assert (human-move(read)))
+    )
+
+(defrule valid-move
+    ?phase <- (phase human-move)
+    ?move <- (human-move ?hmove&:(or (eq ?hmove 1) (eq ?hmove 2) (eq ?hmove 3) (eq ?hmove 4) (eq ?hmove 5) (eq ?hmove 6) (eq ?hmove 7) (eq ?hmove 8) (eq ?hmove 9)))
+    =>
+    (retract ?move ?phase)
+    (assert (occupied (square ?move)(player player-move)))
+    )
+
+(defrule invalid-move
+    ?phase <- (phase human-move)
+    ?move <- (human-move ?move&~1&~2&~3&~4&~5&~6&~7&~8&~9)
+    =>
+    (retract ?move ?phase)
+    (assert (phase human-move))
+    (printout t "Please choose a number between 1 and 9." crlf))
 
 (defquery search-coordinate
     "query to find out all the points that X/O occupies:"
