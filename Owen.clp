@@ -18,7 +18,7 @@
 (defrule player-select
    (phase choose)
    =>
-   (printout t "Do you want the be X or O? ")
+   (printout t "Do you want to be X or O? ")
    (assert (human (read)))
    )
 
