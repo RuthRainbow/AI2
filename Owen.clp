@@ -4,14 +4,12 @@
    (slot player(type STRING))
    )
 
-(deftemplate occupied
-   "Square is occupied by player"
-   (slot square(type INTEGER))
-   (slot player(type STRING))
-   )
-
-
-
+(deftemplate line
+    "Winning line (3 in a row)"
+    (slot sq1(type INTEGER))
+    (slot sq2(type INTEGER))
+    (slot sq3(type INTEGER))
+    )
 
 (deffacts initial-state
    (phase choose)
@@ -173,7 +171,6 @@
        )
    )
 
-
 (defrule turn-end-x
    ?phase <- (phase turn-end)
    ?move <- (move X)
@@ -181,6 +178,7 @@
    (printout t "X end" crlf)
    (retract ?phase ?move)
    (assert (phase choose-move) (move O))
+    (print-board())
    )
 
 (defrule turn-end-o
@@ -190,7 +188,34 @@
    (printout t "O end" crlf)
    (retract ?phase ?move)
    (assert (phase choose-move) (move X))
+    (print-board())
    )
+
+(deffunction print-board()
+    (bind ?i 1)
+    (bind ?j 0)
+    (printout t "current board :" crlf)
+    (while (<= ?i 3) do
+        (while (< ?j 3) do
+            (bind ?result (run-query* search-coordinate-player i+j))
+            (if(eq ?result X)
+        		then (printout t "X ")
+        		else (if (eq ?result X) 
+                   	  	  then (printout t "O ")
+                   		  else (printout t "- ")))
+            (bind ?j (+ 1 ?j)))
+        (printout t crlf)
+        (bind ?j 0)
+        (bind ?i (+ 1 ?i))
+        )
+    (retract ?i ?j)
+    )
+
+(defquery search-coordinate-player
+    "query to find out if the player is in a specific square"
+    (declare (variables ?sq))
+    (occupied (square ?sq) (player ?pl))
+    )
 
 (reset)
 (run)
