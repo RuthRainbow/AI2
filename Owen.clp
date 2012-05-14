@@ -189,11 +189,10 @@
     (retract ?phase)
     (bind ?square (run-query* find-free))
     (bind ?continue TRUE)
-    (while (?square next)
+    (while (and (?square next) ?continue)
         (bind ?num (?square getInt num))
         (bind ?line (run-query* 2-entry-line ?move))
-        (while (?line next)
-            then
+        (while (and (?line next) ?continue)
             (if (or(eq ?num (?line getInt s1)) (eq ?num (?line getInt s2)) (eq ?num (?line getInt s3)))
                 then
                 (retract (?square getObject occ))
@@ -214,11 +213,10 @@
     (retract ?phase)
     (bind ?square (run-query* find-free))
     (bind ?continue TRUE)
-    (while (?square next)
+    (while (and (?square next) ?continue)
         (bind ?num (?square getInt num))
-        (bind ?line (run-query* 2-line ?human))
-        (while (?line next)
-            then
+        (bind ?line (run-query* 2-entry-line ?human))
+        (while (and (?line next) ?continue)
             (if (or(eq ?num (?line getInt s1)) (eq ?num (?line getInt s2)) (eq ?num (?line getInt s3)))
                 then
                 (retract (?square getObject occ))
@@ -231,12 +229,49 @@
     (if ?continue then (assert (phase AI3)))
     )
 
+(defquery 1-entry-line
+    (declare (variables ?turn))
+    (and
+        (line (sq1 ?s1) (sq2 ?s2) (sq3 ?s3))
+        (or 
+            (occupied (square ?s1) (player ?turn))
+            (occupied (square ?s2) (player ?turn))
+            (occupied (square ?s3) (player ?turn))
+            )
+        (or 
+            (and (occupied (square ?s1) (player -)) (occupied (square ?s2) (player -)))
+            (and (occupied (square ?s2) (player -)) (occupied (square ?s3) (player -)))
+            (and (occupied (square ?s1) (player -)) (occupied (square ?s3) (player -)))
+            )
+        )
+    )
+
 (defrule take-AI-turn-3
     ?phase <- (phase AI3)
     (move ?move)
     =>
     (retract ?phase)
-    (assert (phase AI4))
+    (bind ?square (run-query* find-free))
+    (bind ?continue TRUE)
+    (while (and (?square next) ?continue)
+        (bind ?num (?square getInt num))
+        (bind ?line (run-query* 1-entry-line ?move))
+        (bind ?count 0)
+        (while (and (?line next) ?continue)
+            (if (or(eq ?num (?line getInt s1)) (eq ?num (?line getInt s2)) (eq ?num (?line getInt s3)))
+                then
+                (bind ?count (+ ?count 1))
+                (if (>= ?count 2)
+                    then
+                    (retract (?square getObject occ))
+                    (bind ?continue FALSE)
+                    (assert (occupied (square ?num) (player ?move)) (phase turn-end))
+                    (printout t "Double Rainbow! :D" crlf)
+                    )
+                )
+            )
+        )
+    (if ?continue then (assert (phase AI4)))
     )
 
 
@@ -246,7 +281,27 @@
     (human ?human)
     =>
     (retract ?phase)
-    (assert (phase AI5))
+    (bind ?square (run-query* find-free))
+    (bind ?continue TRUE)
+    (while (and (?square next) ?continue)
+        (bind ?num (?square getInt num))
+        (bind ?line (run-query* 1-entry-line ?human))
+        (bind ?count 0)
+        (while (and (?line next) ?continue)
+            (if (or(eq ?num (?line getInt s1)) (eq ?num (?line getInt s2)) (eq ?num (?line getInt s3)))
+                then
+                (bind ?count (+ ?count 1))
+                (if (>= ?count 2)
+                    then
+                    (retract (?square getObject occ))
+                    (bind ?continue FALSE)
+                    (assert (occupied (square ?num) (player ?move)) (phase turn-end))
+                    (printout t "No forking >:[" crlf)
+                    )
+                )
+            )
+        )
+    (if ?continue then (assert (phase AI5)))
     )
 
 
@@ -286,11 +341,6 @@
         else
         (assert (phase AI7))
         )
-    )
-
-
-(defquery find-free
-    ?occ <- (occupied (square ?num) (player -))
     )
 
 (defrule take-AI-turn-7
@@ -346,7 +396,7 @@
         then
         (assert (input ?num) (phase print))
         else
-        (assert (phase choose-move))
+        (assert (phase check-end))
         )
     )
 
@@ -360,10 +410,67 @@
     (assert (phase print-board-count))
     )
 
-(defrule game-end
-    (not (occupied (square ?) (player -)))
+
+(defquery winner
+    (and
+        (line (sq1 ?s1) (sq2 ?s2) (sq3 ?s3))
+        (or
+	        (and
+	            (occupied (square ?s1) (player X))
+	            (occupied (square ?s2) (player X))
+	            (occupied (square ?s3) (player X))
+	            )
+	        (and
+	            (occupied (square ?s1) (player O))
+	            (occupied (square ?s2) (player O))
+	            (occupied (square ?s3) (player O))
+	            )
+            )
+        )
+    )
+
+(defrule check-end-space
+    ?phase <- (phase check-end)
+    (occupied (square ?) (player -))
+    (move ?move)
+    (human ?human)
     =>
-    (printout t "No more moves!" crlf)
+    (retract ?phase)
+    (bind ?win (run-query* winner))
+    (if (?win next)
+        then
+        (if (eq ?move ?human)
+            then
+            (printout t "You have lost!" crlf)
+            else
+            (printout t "You have won!" crlf)
+            )
+        (ask-start-again())
+        else
+        (assert (phase choose-move))
+        )
+    )
+
+(defrule check-end-full
+    ?phase <- (phase check-end)
+    (not (occupied (square ?) (player -)))
+    (move ?move)
+    (human ?human)
+    =>
+    (retract ?phase)
+    (bind ?win (run-query* winner))
+    (if (?win next)
+        then
+        (if (eq ?move ?human)
+            then
+            (printout t "You have lost!" crlf)
+            else
+            (printout t "You have won!" crlf)
+            )
+        (ask-start-again())
+        else
+        (printout t "It was a draw." crlf)
+        )
     (ask-start-again())
     )
 
@@ -376,6 +483,6 @@
         (halt)
         )
     )
-    
-    (reset)
-    (run)
+
+(reset)
+(run)
