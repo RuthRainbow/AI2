@@ -25,59 +25,13 @@
 
 (deffacts lines
     (line (sq1 1) (sq2 2) (sq3 3))
-	(line (sq1 4) (sq2 5) (sq3 6))
-	(line (sq1 7) (sq2 8) (sq3 9))
-	(line (sq1 1) (sq2 4) (sq3 7))
-	(line (sq1 2) (sq2 5) (sq3 8))
-	(line (sq1 3) (sq2 6) (sq3 9))
-	(line (sq1 1) (sq2 5) (sq3 9))
-	(line (sq1 3) (sq2 5) (sq3 7))
-    /*
-    (line (sq1 1) (sq2 3) (sq3 2))
-	(line (sq1 4) (sq2 6) (sq3 5))
-	(line (sq1 7) (sq2 9) (sq3 8))
-	(line (sq1 1) (sq2 7) (sq3 4))
-	(line (sq1 2) (sq2 8) (sq3 5))
-	(line (sq1 3) (sq2 9) (sq3 6))
-	(line (sq1 1) (sq2 9) (sq3 5))
-	(line (sq1 3) (sq2 7) (sq3 5))
-    
-    (line (sq1 2) (sq2 1) (sq3 3))
-	(line (sq1 5) (sq2 4) (sq3 6))
-	(line (sq1 8) (sq2 7) (sq3 9))
-	(line (sq1 4) (sq2 1) (sq3 7))
-	(line (sq1 5) (sq2 2) (sq3 8))
-	(line (sq1 6) (sq2 3) (sq3 9))
-	(line (sq1 5) (sq2 1) (sq3 9))
-	(line (sq1 5) (sq2 3) (sq3 7))
-  
-    (line (sq1 2) (sq2 3) (sq3 1))
-	(line (sq1 5) (sq2 6) (sq3 4))
-	(line (sq1 8) (sq2 9) (sq3 7))
-	(line (sq1 4) (sq2 7) (sq3 1))
-	(line (sq1 5) (sq2 8) (sq3 2))
-	(line (sq1 6) (sq2 9) (sq3 3))
-	(line (sq1 5) (sq2 9) (sq3 1))
-	(line (sq1 5) (sq2 7) (sq3 3))
-
-    (line (sq1 3) (sq2 2) (sq3 1))
-	(line (sq1 6) (sq2 5) (sq3 4))
-	(line (sq1 9) (sq2 8) (sq3 7))
-	(line (sq1 7) (sq2 4) (sq3 1))
-	(line (sq1 8) (sq2 5) (sq3 2))
-	(line (sq1 9) (sq2 6) (sq3 3))
-	(line (sq1 9) (sq2 5) (sq3 1))
-	(line (sq1 7) (sq2 5) (sq3 3))
-        
-    (line (sq1 3) (sq2 1) (sq3 2))
-	(line (sq1 6) (sq2 4) (sq3 5))
-	(line (sq1 9) (sq2 7) (sq3 8))
-	(line (sq1 7) (sq2 1) (sq3 4))
-	(line (sq1 8) (sq2 2) (sq3 5))
-	(line (sq1 9) (sq2 3) (sq3 6))
-	(line (sq1 9) (sq2 1) (sq3 5))
-	(line (sq1 7) (sq2 3) (sq3 5))
-    */
+    (line (sq1 4) (sq2 5) (sq3 6))
+    (line (sq1 7) (sq2 8) (sq3 9))
+    (line (sq1 1) (sq2 4) (sq3 7))
+    (line (sq1 2) (sq2 5) (sq3 8))
+    (line (sq1 3) (sq2 6) (sq3 9))
+    (line (sq1 1) (sq2 5) (sq3 9))
+    (line (sq1 3) (sq2 5) (sq3 7))
     )
 
 (deffacts initial-state
@@ -141,7 +95,7 @@
     (not (occupied (square ?num) (player -)))
     =>
     (retract ?phase ?in)
-    (printout t "This square is already taken" crlf)
+    (printout t "This square is already taken." crlf)
     (assert (phase choose-move))
     )
 
@@ -170,7 +124,7 @@
     (declare (variables ?turn))
     (and
         (line (sq1 ?s1) (sq2 ?s2) (sq3 ?s3))
-        (or 
+        (or
             (and (occupied (square ?s1) (player ?turn)) (occupied (square ?s2) (player ?turn)))
             (and (occupied (square ?s2) (player ?turn)) (occupied (square ?s3) (player ?turn)))
             (and (occupied (square ?s1) (player ?turn)) (occupied (square ?s3) (player ?turn)))
@@ -198,7 +152,7 @@
                 (retract (?square getObject occ))
                 (bind ?continue FALSE)
                 (assert (occupied (square ?num) (player ?move)) (phase turn-end))
-                (printout t "MUHAHA Winner winner, chicken dinner" crlf)
+                (printout t "MUHAHA Winner, winner, chicken dinner" crlf)
                 )
             )
         )
@@ -222,7 +176,7 @@
                 (retract (?square getObject occ))
                 (bind ?continue FALSE)
                 (assert (occupied (square ?num) (player ?move)) (phase turn-end))
-                (printout t "YOU SHALL NOT PASS" crlf)
+                (printout t "You shall not pass!" crlf)
                 )
             )
         )
@@ -233,12 +187,12 @@
     (declare (variables ?turn))
     (and
         (line (sq1 ?s1) (sq2 ?s2) (sq3 ?s3))
-        (or 
+        (or
             (occupied (square ?s1) (player ?turn))
             (occupied (square ?s2) (player ?turn))
             (occupied (square ?s3) (player ?turn))
             )
-        (or 
+        (or
             (and (occupied (square ?s1) (player -)) (occupied (square ?s2) (player -)))
             (and (occupied (square ?s2) (player -)) (occupied (square ?s3) (player -)))
             (and (occupied (square ?s1) (player -)) (occupied (square ?s3) (player -)))
@@ -266,7 +220,7 @@
                     (retract (?square getObject occ))
                     (bind ?continue FALSE)
                     (assert (occupied (square ?num) (player ?move)) (phase turn-end))
-                    (printout t "Double Rainbow! :D" crlf)
+                    (printout t "Chill out, I've got this." crlf)
                     )
                 )
             )
@@ -337,7 +291,7 @@
         then
         (retract (?free getObject occ))
         (assert (occupied (square (?free getInt num)) (player ?move)) (phase turn-end))
-        (printout t "Corner smorner =[" crlf)
+        (printout t "Help! I'm cornered." crlf)
         else
         (assert (phase AI7))
         )
@@ -355,7 +309,7 @@
         (assert (occupied (square (?free getInt num)) (player ?move)) (phase turn-end))
         (printout t "I'll take what I can get." crlf)
         else
-        (printout t "AI COULD NOT MOVE, ERROR =[" crlf)
+        (printout t "Oh dear, I seem to have a problem..." crlf)
         )
     )
 
@@ -363,7 +317,6 @@
     ?phase <- (phase turn-end)
     ?move <- (move X)
     =>
-    (printout t "X end" crlf)
     (retract ?phase ?move)
     (assert (phase print-board) (move O))
     )
@@ -372,7 +325,6 @@
     ?phase <- (phase turn-end)
     ?move <- (move O)
     =>
-    (printout t "O end" crlf)
     (retract ?phase ?move)
     (assert (phase print-board) (move X))
     )
@@ -415,16 +367,16 @@
     (and
         (line (sq1 ?s1) (sq2 ?s2) (sq3 ?s3))
         (or
-	        (and
-	            (occupied (square ?s1) (player X))
-	            (occupied (square ?s2) (player X))
-	            (occupied (square ?s3) (player X))
-	            )
-	        (and
-	            (occupied (square ?s1) (player O))
-	            (occupied (square ?s2) (player O))
-	            (occupied (square ?s3) (player O))
-	            )
+            (and
+                (occupied (square ?s1) (player X))
+                (occupied (square ?s2) (player X))
+                (occupied (square ?s3) (player X))
+                )
+            (and
+                (occupied (square ?s1) (player O))
+                (occupied (square ?s2) (player O))
+                (occupied (square ?s3) (player O))
+                )
             )
         )
     )
@@ -475,11 +427,21 @@
     )
 
 (deffunction ask-start-again ()
-    (printout t "Play again? (y/n) ")
-    (if (eq (read) y)
+    (printout t "Do you want to play again? (y/n) ")
+    (bind ?choice M)
+    (bind ?retry FALSE)
+    (while (and (neq ?choice y) (neq ?choice n))
+        (if ?retry then (printout t "Not a valid choice." crlf))
+        (bind ?choice (read))
+        (bind ?retry TRUE)
+        )
+    
+    (if (eq ?choice y)
         then
+        (printout t "Alright then... " crlf)
         (reset)
         else
+        (printout t "Bye. =[")
         (halt)
         )
     )
