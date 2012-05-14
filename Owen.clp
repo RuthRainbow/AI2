@@ -16,54 +16,68 @@
     (occupied (square 9) (player -))
     )
 
-(deffacts adjacent
-    (adjacent 1 2)
-    (adjacent 1 4)
-    (adjacent 1 5)
-    
-    (adjacent 2 1)
-    (adjacent 2 3)
-    (adjacent 2 5)
-    
-    (adjacent 3 2)
-    (adjacent 3 6)
-    (adjacent 3 5)
-    
-    (adjacent 4 5)
-    (adjacent 4 1)
-    (adjacent 4 7)
-    
-    (adjacent 5 1)
-    (adjacent 5 2)
-    (adjacent 5 3)
-    (adjacent 5 4)
-    (adjacent 5 6)
-    (adjacent 5 7)
-    (adjacent 5 8)
-    (adjacent 5 9)
-    
-    (adjacent 6 5)
-    (adjacent 6 3)
-    (adjacent 6 9)
-    
-    (adjacent 7 8)
-    (adjacent 7 4)
-    (adjacent 7 5)
-    
-    (adjacent 8 7)
-    (adjacent 8 9)
-    (adjacent 8 5)
-    
-    (adjacent 9 8)
-    (adjacent 9 6)
-    (adjacent 9 5)
-    )
-
 (deftemplate line
     "Winning line (3 in a row)"
     (slot sq1(type INTEGER))
     (slot sq2(type INTEGER))
     (slot sq3(type INTEGER))
+    )
+
+(deffacts lines
+    (line (sq1 1) (sq2 2) (sq3 3))
+	(line (sq1 4) (sq2 5) (sq3 6))
+	(line (sq1 7) (sq2 8) (sq3 9))
+	(line (sq1 1) (sq2 4) (sq3 7))
+	(line (sq1 2) (sq2 5) (sq3 8))
+	(line (sq1 3) (sq2 6) (sq3 9))
+	(line (sq1 1) (sq2 5) (sq3 9))
+	(line (sq1 3) (sq2 5) (sq3 7))
+    /*
+    (line (sq1 1) (sq2 3) (sq3 2))
+	(line (sq1 4) (sq2 6) (sq3 5))
+	(line (sq1 7) (sq2 9) (sq3 8))
+	(line (sq1 1) (sq2 7) (sq3 4))
+	(line (sq1 2) (sq2 8) (sq3 5))
+	(line (sq1 3) (sq2 9) (sq3 6))
+	(line (sq1 1) (sq2 9) (sq3 5))
+	(line (sq1 3) (sq2 7) (sq3 5))
+    
+    (line (sq1 2) (sq2 1) (sq3 3))
+	(line (sq1 5) (sq2 4) (sq3 6))
+	(line (sq1 8) (sq2 7) (sq3 9))
+	(line (sq1 4) (sq2 1) (sq3 7))
+	(line (sq1 5) (sq2 2) (sq3 8))
+	(line (sq1 6) (sq2 3) (sq3 9))
+	(line (sq1 5) (sq2 1) (sq3 9))
+	(line (sq1 5) (sq2 3) (sq3 7))
+  
+    (line (sq1 2) (sq2 3) (sq3 1))
+	(line (sq1 5) (sq2 6) (sq3 4))
+	(line (sq1 8) (sq2 9) (sq3 7))
+	(line (sq1 4) (sq2 7) (sq3 1))
+	(line (sq1 5) (sq2 8) (sq3 2))
+	(line (sq1 6) (sq2 9) (sq3 3))
+	(line (sq1 5) (sq2 9) (sq3 1))
+	(line (sq1 5) (sq2 7) (sq3 3))
+
+    (line (sq1 3) (sq2 2) (sq3 1))
+	(line (sq1 6) (sq2 5) (sq3 4))
+	(line (sq1 9) (sq2 8) (sq3 7))
+	(line (sq1 7) (sq2 4) (sq3 1))
+	(line (sq1 8) (sq2 5) (sq3 2))
+	(line (sq1 9) (sq2 6) (sq3 3))
+	(line (sq1 9) (sq2 5) (sq3 1))
+	(line (sq1 7) (sq2 5) (sq3 3))
+        
+    (line (sq1 3) (sq2 1) (sq3 2))
+	(line (sq1 6) (sq2 4) (sq3 5))
+	(line (sq1 9) (sq2 7) (sq3 8))
+	(line (sq1 7) (sq2 1) (sq3 4))
+	(line (sq1 8) (sq2 2) (sq3 5))
+	(line (sq1 9) (sq2 3) (sq3 6))
+	(line (sq1 9) (sq2 1) (sq3 5))
+	(line (sq1 7) (sq2 3) (sq3 5))
+    */
     )
 
 (deffacts initial-state
@@ -152,40 +166,69 @@
     (assert (phase AI1))
     )
 
+(defquery 2-entry-line
+    (declare (variables ?turn))
+    (and
+        (line (sq1 ?s1) (sq2 ?s2) (sq3 ?s3))
+        (or 
+            (and (occupied (square ?s1) (player ?turn)) (occupied (square ?s2) (player ?turn)))
+            (and (occupied (square ?s2) (player ?turn)) (occupied (square ?s3) (player ?turn)))
+            (and (occupied (square ?s1) (player ?turn)) (occupied (square ?s3) (player ?turn)))
+            )
+        )
+    )
+
+(defquery find-free
+    ?occ <- (occupied (square ?num) (player -))
+    )
+
 (defrule take-AI-turn-1
     ?phase <- (phase AI1)
+    (move ?move)
     =>
     (retract ?phase)
-    (assert (phase AI2))
+    (bind ?square (run-query* find-free))
+    (bind ?continue TRUE)
+    (while (?square next)
+        (bind ?num (?square getInt num))
+        (bind ?line (run-query* 2-entry-line ?move))
+        (while (?line next)
+            then
+            (if (or(eq ?num (?line getInt s1)) (eq ?num (?line getInt s2)) (eq ?num (?line getInt s3)))
+                then
+                (retract (?square getObject occ))
+                (bind ?continue FALSE)
+                (assert (occupied (square ?num) (player ?move)) (phase turn-end))
+                (printout t "MUHAHA Winner winner, chicken dinner" crlf)
+                )
+            )
+        )
+    (if ?continue then (assert (phase AI2)))
     )
 
 (defrule take-AI-turn-2
     ?phase <- (phase AI2)
+    (move ?move)
+    (human ?human)
     =>
     (retract ?phase)
-    (assert (phase AI3))
-    )
-
-(defquery find-adjacent
-    (declare (variables ?num ?turn))
-    (adjacent ?num ?numadj)
-    (occupied (square ?numadj) (player ?turn))
-    )
-
-(deffunction boolean-double (?num ?turn)
-    (bind ?taken (run-query* find-adjacent ?num ?turn))
-    (if (and (?taken next) (?taken next))
-        then
-        (return true)
+    (bind ?square (run-query* find-free))
+    (bind ?continue TRUE)
+    (while (?square next)
+        (bind ?num (?square getInt num))
+        (bind ?line (run-query* 2-line ?human))
+        (while (?line next)
+            then
+            (if (or(eq ?num (?line getInt s1)) (eq ?num (?line getInt s2)) (eq ?num (?line getInt s3)))
+                then
+                (retract (?square getObject occ))
+                (bind ?continue FALSE)
+                (assert (occupied (square ?num) (player ?move)) (phase turn-end))
+                (printout t "YOU SHALL NOT PASS" crlf)
+                )
+            )
         )
-    )
-
-(defquery find-double-free
-    (declare (variables ?turn))
-    (and
-        ?occ <- (occupied (square ?num) (player -))
-        (boolean-double ?num ?turn)
-        )
+    (if ?continue then (assert (phase AI3)))
     )
 
 (defrule take-AI-turn-3
@@ -193,15 +236,6 @@
     (move ?move)
     =>
     (retract ?phase)
-    (bind ?double (run-query* find-double-free ?move))
-    (if (?double next)
-        then
-        (retract (?double getObject occ))
-        (assert (occupied (square (?double getInt num)) (player ?move)) (phase turn-end))
-        (printout t "DOUBLE RAINBOW! :D" crlf)
-        else
-        (assert (phase AI4))
-        )
     (assert (phase AI4))
     )
 
@@ -212,15 +246,7 @@
     (human ?human)
     =>
     (retract ?phase)
-    (bind ?double (run-query* find-double-free ?human))
-    (if (?double next)
-        then
-        (retract (?double getObject occ))
-        (assert (occupied (square (?double getInt num)) (player ?move)) (phase turn-end))
-        (printout t "NO DOUBLE RAINBOWS! >=[" crlf)
-        else
-        (assert (phase AI5))
-        )
+    (assert (phase AI5))
     )
 
 
@@ -241,15 +267,6 @@
     (retract ?phase)
     (assert (phase AI6))
     )
-
-
-;(deffunction freeCorner ()
-;   (foreach ?i (create$ 1 3 7 9)
-;       (if (test (not (occupied (square ?i) (player ?))))
-;            then (return ?i))
-;       )
-;   (return 0)
-;   )
 
 (defquery find-free-corner
     ?occ <- (occupied (square ?num&:(or (eq ?num 1) (eq ?num 3) (eq ?num 7) (eq ?num 9))) (player -))
