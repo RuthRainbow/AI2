@@ -40,8 +40,9 @@
      else
     	(printout t "choice was valid - c's go first" crlf)
         (assert (phase computer-move)))
+    ;(assert (player-move ?choice))
     (retract ?phase ?choice)
-    (assert (player-move X))
+    (print-board())
     )
 
 (defrule invalid-choice
@@ -64,7 +65,7 @@
     (phase human-move)
     =>
     (printout t "please make a move by choosing a square between 1 and 9" crlf)
-    (assert (human-move(read)))
+    (assert (human-move (read)))
     )
 
 (defrule valid-move
@@ -72,8 +73,11 @@
     ?move <- (human-move ?hmove&:(or (eq ?hmove 1) (eq ?hmove 2) (eq ?hmove 3) (eq ?hmove 4) (eq ?hmove 5) (eq ?hmove 6) (eq ?hmove 7) (eq ?hmove 8) (eq ?hmove 9)))
     =>
     (retract ?move ?phase)
-    (assert (occupied (square ?move)(player player-move)))
-    (assert (phase computer-move)))
+    (bind ?who <- player-move)
+    (assert (occupied (square ?move)(player ?who)))
+    (assert (phase computer-move))
+    ;(modify (player-move next-player()))
+    (print-board()))
 
 /*(defrule square-already-occupied
     ?phase <- (phase human-move)
@@ -98,7 +102,25 @@
     (occupied (square ?sq) (player ?pl))
     )
 
-(bind ?result (run-query* search-coordinate X))
+(deffunction print-board()
+    (bind ?i 1)
+    (bind ?j 0)
+    (printout t "current board :" crlf)
+    (while (<= ?i 3) do
+        (while (< ?j 3) do
+            (bind ?result (run-query* search-coordinate-player i+j))
+            (if(eq ?result X)
+        		then (printout t "X ")
+        		else (if (eq ?result X) 
+                   	  	  then (printout t "O ")
+                   		  else (printout t "- ")))
+            (bind ?j (+ 1 ?j)))
+        (printout t crlf)
+        (bind ?j 0)
+        (bind ?i (+ 1 ?i))
+        )
+    (retract ?i ?j)
+    )
 
 (defquery search-coordinate-player
     "query to find out if the player is in a specific square"
@@ -114,7 +136,10 @@
     (retract ?phase)
     (assert (phase human-move))
     (printout t "Playing centre" crlf)
-    (assert (occupied (square 5) (player player-move))))
+    (bind ?who <- player-move) 
+    (assert (occupied (square 5) (player ?who)))
+    (printout t ?who crlf)
+    (print-board()))
 
 (defrule top-right-corner
 "Rule 6 - play an available corner square"
@@ -124,8 +149,11 @@
     (retract ?phase)
     (assert (phase human-move))
     (printout t "Playing upper right corner" crlf)
-    (assert (occupied (square 3) (player player-move))))
+    (bind ?who <- player-move)
+    (assert (occupied (square 3) (player ?who)))
+    (print-board()))
 
+/*
 (defrule lower-right-corner
 "Rule 6 - play an available corner square"
 (not (occupied {square == 9}))
@@ -134,7 +162,8 @@
     (retract ?phase)
     (assert (phase human-move))
     (printout t "Playing lower right corner" crlf)
-    (assert (occupied (square 9) (player player-move))))
+    (assert (occupied (square 9) (player ?player-move)))
+    (print-board()))
 
 (defrule top-left-corner
 "Rule 6 - play an available corner square"
@@ -144,7 +173,8 @@
     (retract ?phase)
     (assert (phase human-move))
     (printout t "Playing upper left corner" crlf)
-    (assert (occupied (square 1) (player player-move))))
+    (assert (occupied (square 1) (player ?player-move)))
+    (print-board()))
 
 (defrule lower-left-corner
 "Rule 6 - play an available corner square"
@@ -154,7 +184,8 @@
     (retract ?phase)
     (assert (phase human-move))
     (printout t "Playing lower left corner" crlf)
-    (assert (occupied (square 7) (player player-move))))
+    (assert (occupied (square 7) (player ?player-move)))
+    (print-board()))*/
 
 (reset)
 (run)
