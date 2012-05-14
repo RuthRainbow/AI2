@@ -4,7 +4,6 @@
    (slot player(type STRING))
    )
 
-
 (deffacts board
     (occupied (square 1) (player -))
     (occupied (square 2) (player -))
@@ -15,6 +14,49 @@
     (occupied (square 7) (player -))
     (occupied (square 8) (player -))
     (occupied (square 9) (player -))
+    )
+
+(deffacts adjacent
+    (adjacent 1 2)
+    (adjacent 1 4)
+    (adjacent 1 5)
+    
+    (adjacent 2 1)
+    (adjacent 2 3)
+    (adjacent 2 5)
+    
+    (adjacent 3 2)
+    (adjacent 3 6)
+    (adjacent 3 5)
+    
+    (adjacent 4 5)    
+    (adjacent 4 1)
+    (adjacent 4 7)
+    
+    (adjacent 5 1)
+    (adjacent 5 2)
+    (adjacent 5 3)
+    (adjacent 5 4)
+    (adjacent 5 6)
+    (adjacent 5 7)
+    (adjacent 5 8)
+    (adjacent 5 9)
+    
+    (adjacent 6 5)
+    (adjacent 6 3)
+    (adjacent 6 9)
+    
+    (adjacent 7 8)    
+    (adjacent 7 4)
+    (adjacent 7 5)
+    
+    (adjacent 8 7)    
+    (adjacent 8 9)
+    (adjacent 8 5)
+    
+    (adjacent 9 8)    
+    (adjacent 9 6)
+    (adjacent 9 5)
     )
 
 (deftemplate line
@@ -85,7 +127,7 @@
    (not (occupied (square ?num) (player -)))
    =>
    (retract ?phase ?in)
-   (printout t "This square is already taken")
+   (printout t "This square is already taken" crlf)
    (assert (phase choose-move))
    )
 
@@ -182,9 +224,32 @@
        (retract (?free getObject occ))
        (assert (occupied (square (?free getInt num)) (player ?move)) (phase turn-end))
        else
-       (printout t "AI COULD NOT MOVE, ERROR =[" crlf)
+       (assert (phase AI7))
        )
    )
+
+
+(defquery find-free
+    ?occ <- (occupied (square ?num) (player -))
+    )
+
+(defrule take-AI-turn-7
+    ?phase <- (phase AI7)
+    (move ?move)
+    =>
+    (retract ?phase)
+    (bind ?free (run-query* find-free))
+    (if (?free next)
+        then
+        (retract (?free getObject occ))
+        (assert (occupied (square (?free getInt num)) (player ?move)) (phase turn-end))
+        else
+        (printout t "AI COULD NOT MOVE, ERROR =[" crlf)
+        )
+    )
+
+
+
 
 (defrule turn-end-x
    ?phase <- (phase turn-end)
