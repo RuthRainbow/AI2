@@ -4,6 +4,19 @@
    (slot player(type STRING))
    )
 
+
+(deffacts board
+    (occupied (square 1) (player -))
+    (occupied (square 2) (player -))
+    (occupied (square 3) (player -))
+    (occupied (square 4) (player -))
+    (occupied (square 5) (player -))
+    (occupied (square 6) (player -))
+    (occupied (square 7) (player -))
+    (occupied (square 8) (player -))
+    (occupied (square 9) (player -))
+    )
+
 (deftemplate line
     "Winning line (3 in a row)"
     (slot sq1(type INTEGER))
@@ -60,16 +73,16 @@
    ?phase <- (phase check-move)
    ?in <- (input ?num)
    (move ?move)
-   (not (square ?num ?))
+   ?occ <- (occupied (square ?num) (player -))
    =>
-   (retract ?phase ?in)
-   (assert (phase turn-end) (square ?num ?move))
+   (retract ?phase ?in ?occ)
+   (assert (phase turn-end) (occupied (square ?num) (player ?move)))
    )
 
 (defrule move-invalid
    ?phase <- (phase check-move)
    ?in <- (input ?num)
-   (square ?num ?)
+   (not (occupied (square ?num) (player -)))
    =>
    (retract ?phase ?in)
    (printout t "This square is already taken")
@@ -130,42 +143,44 @@
 
 (defrule take-AI-turn-5
    ?phase <- (phase AI5)
-   ?move <- (move ?)
-   (not (square 5 ?))
+   (move ?move)
+   ?occ <- (occupied (square 5) (player -))
    =>
-   (retract ?phase)
-   (assert (square 5 ?move) (phase turn-end))
+   (retract ?phase ?occ)
+   (assert (occupied (square 5) (player ?move)) (phase turn-end))
    )
 
 (defrule take-AI-turn-5-fail
    ?phase <- (phase AI5)
-   (square 5 ?)
+   (not (occupied (square 5) (player -)))
    =>
    (retract ?phase)
    (assert (phase AI6))
    )
 
 
-(deffunction freeCorner ()
-   (foreach ?i (create$ 1 3 7 9)
-       (if (not (square ?i ?)) then (return ?i))
-       )
-   (return 0)
-   )
+;(deffunction freeCorner ()
+;   (foreach ?i (create$ 1 3 7 9)
+;       (if (test (not (occupied (square ?i) (player ?))))
+;            then (return ?i))
+;       )
+;   (return 0)
+;   )
 
 (defquery find-free-corner
-   (declare (variables ?ln))
-   (square ?num&:(or (eq ?num 1) (eq ?num 3) (eq ?num 7) (eq ?num 9)) ?)
+   ?occ <- (occupied (square ?num&:(or (eq ?num 1) (eq ?num 3) (eq ?num 7) (eq ?num 9))) (player -))
    )
 
 (defrule take-AI-turn-6
    ?phase <- (phase AI6)
+   (move ?move)
    =>
    (retract ?phase)
-   (bind ?num (freeCorner))
-   (if (neq ?num 0)
+   (bind ?free (run-query* find-free-corner))
+   (if (?free next)
        then
-       (assert (square ?num ?move) (phase turn-end))
+       (retract (?free getObject occ))
+       (assert (occupied (square (?free getInt num)) (player ?move)) (phase turn-end))
        else
        (printout t "AI COULD NOT MOVE, ERROR =[" crlf)
        )
@@ -177,8 +192,7 @@
    =>
    (printout t "X end" crlf)
    (retract ?phase ?move)
-   (assert (phase choose-move) (move O))
-    (print-board())
+   (assert (phase print-board) (move O))
    )
 
 (defrule turn-end-o
@@ -187,35 +201,63 @@
    =>
    (printout t "O end" crlf)
    (retract ?phase ?move)
-   (assert (phase choose-move) (move X))
-    (print-board())
+   (assert (phase print-board) (move X))
    )
 
-(deffunction print-board()
-    (bind ?i 1)
-    (bind ?j 0)
-    (printout t "current board :" crlf)
-    (while (<= ?i 3) do
-        (while (< ?j 3) do
-            (bind ?result (run-query* search-coordinate-player i+j))
-            (if(eq ?result X)
-        		then (printout t "X ")
-        		else (if (eq ?result X) 
-                   	  	  then (printout t "O ")
-                   		  else (printout t "- ")))
-            (bind ?j (+ 1 ?j)))
-        (printout t crlf)
-        (bind ?j 0)
-        (bind ?i (+ 1 ?i))
-        )
-    (retract ?i ?j)
+(defrule print-board
+	?phase <- (phase print-board)
+    =>
+    (retract ?phase)
+    (assert (input 0) (phase print-board-count))
     )
 
-(defquery search-coordinate-player
-    "query to find out if the player is in a specific square"
-    (declare (variables ?sq))
-    (occupied (square ?sq) (player ?pl))
+(defrule print-board-count
+    ?phase <- (phase print-board-count)
+    ?input <- (input ?num)
+    =>
+    (retract ?phase ?input)
+    (bind ?num (+ ?num 1))
+	(if (eq (mod ?num 3) 1)
+            then (printout t crlf))
+    (if (< ?num 10)
+        then
+        (assert (input ?num) (phase print))
+        else 
+        (assert (phase choose-move))
+        )
     )
+
+(defrule print
+    ?phase <- (phase print)
+    ?in <- (input ?i)
+    (occupied (square ?i) (player ?c))
+    =>
+    (retract ?phase)
+    (printout t ?c " ")
+    (assert (phase print-board-count))
+    )
+
+/*
+(defrule printO
+    ?phase <- (phase print)
+    ?in <- (input ?i)
+    (occupied (square ?i) (player O))
+    =>
+    (retract ?phase)
+    (printout t "O ")
+    (assert (phase print-board-count))
+    )
+
+(defrule print-
+    ?phase <- (phase print)
+    ?in <- (input ?i)
+    (occupied (square ?i) (player -))
+    =>
+    (retract ?phase)
+    (printout t "- ")
+    (assert (phase print-board-count))
+    )
+*/
 
 (reset)
 (run)
